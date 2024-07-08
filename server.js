@@ -39,7 +39,7 @@ function isRequestAuthenticated(req, res, next) {
 
 // Route to serve the home page
 app.get('/', isRequestAuthenticated, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'home.html'));
+    res.sendFile(path.join(__dirname, 'home.html'));
 });
 
 // Route to handle GitHub authentication
