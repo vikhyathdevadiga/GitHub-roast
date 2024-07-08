@@ -29,13 +29,17 @@ passport.use(new GitHubStrategy({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Route to serve the login page
-app.get('/', (req, res) => {
+// Middleware function to check if the request is authenticated 
+function isRequestAuthenticated(req, res, next) {
     if (req.isAuthenticated()) {
-        res.redirect('/home');
-    } else {
-        res.sendFile(path.join(__dirname, 'public', 'login.html'));
+        return next();
     }
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+}
+
+// Route to serve the home page
+app.get('/', isRequestAuthenticated, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'home.html'));
 });
 
 // Route to handle GitHub authentication
@@ -44,23 +48,14 @@ app.get('/auth/github', passport.authenticate('github'));
 // GitHub callback route
 app.get('/auth/github/callback', 
     passport.authenticate('github', { failureRedirect: '/' }),
-    (req, res) => res.redirect('/home'));
-
-// Protected route to serve the homepage after login
-app.get('/home', (req, res) => {
-    if (req.isAuthenticated()) {
-        res.sendFile(path.join(__dirname, 'public', 'home.html'));
-    } else {
-        res.redirect('/');
-    }
-});
+    (req, res) => res.redirect('/'));
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY_NEW4,
 });
 
 // Endpoint to generate a roast
-app.get('/roast/:username', async (req, res) => {
+app.get('/roast/:username', isRequestAuthenticated, async (req, res) => {
     const { username } = req.params;
     try {
         const githubResponse = await axios.get(`https://api.github.com/users/${username}`);
@@ -92,12 +87,3 @@ app.get('/roast/:username', async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server is running on http://localhost:${PORT}`));
-
-
-
-
-
-
-
-
-
